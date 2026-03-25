@@ -1,0 +1,15 @@
+{
+  "name": "wallpaper-app",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.10.1"
+  },
+  "dependencies": {
+    "tauri-plugin-wallpaper": "^3.0.0"
+  }
+}
