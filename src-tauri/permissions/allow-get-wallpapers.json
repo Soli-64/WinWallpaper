@@ -1,0 +1,35 @@
+{
+  "default": null,
+  "permission": [
+    {
+      "identifier": "allow-get-wallpapers",
+      "description": "Allow fetching wallpapers",
+      "commands": {
+        "allow": [
+          "get_wallpapers"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "identifier": "allow-set-wallpaper-config",
+      "description": "Allow saving wallpaper config",
+      "commands": {
+        "allow": [
+          "set_wallpaper_config"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "identifier": "allow-get-default-wallpaper",
+      "description": "Allow getting default wallpaper",
+      "commands": {
+        "allow": [
+          "get_default_wallpaper"
+        ],
+        "deny": []
+      }
+    }
+  ]
+}

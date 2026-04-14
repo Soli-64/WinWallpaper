@@ -1,15 +1,55 @@
-# Windows Wallpaper manager
+# Windows Wallpaper Manager
 
-## A wallpaper manager for windows inpired by wayland full-keyboard ux.
+A native Windows wallpaper manager built with Tauri v2 and React. It provides a seamless experience for setting both images and videos as your system wallpaper across multiple monitors.
 
-## Put your wallppers in ~/Documents/win-wallpaper/wallpapers
+## Features
 
-## What's already functionnal:
-### - Keyboard shortcut to open / close the app
-### - Change wallpaper on click
-### - Detect wallpaper from directory and create thumbnails
+- Multi-Monitor Support: Automatically detects all active monitors and creates dedicated background windows for each.
+- Media Support: Supports standard image formats and video files (MP4, WebM).
+- Automatic Thumbnails: Generates and caches thumbnails for all media types using FFmpeg.
+- Global Shortcut: Toggle the selection interface at any time using Alt + W.
+- Session Persistence: Remembers and reloads your last selected wallpaper on startup.
+- Performance: Built with Rust and React for a lightweight and responsive experience.
 
-## Upcoming:
-### - Full keyboard UX for changing wallpapers
+## Prerequisites
 
-![alt text](docs/image.png)
+- Rust (latest stable version)
+- Node.js (v18 or newer)
+- FFmpeg (must be available in your system PATH for video thumbnail generation)
+
+## Installation
+
+1. Clone the repository.
+2. Install the frontend dependencies:
+   ```bash
+   npm install
+   ```
+
+## Development
+
+To run the application in development mode:
+```bash
+npm run tauri dev
+```
+
+## Build
+
+To create a production build:
+```bash
+npm run tauri build
+```
+
+## Configuration and Storage
+
+The application stores all data in your Documents folder under the `win-wallpaper` directory:
+
+- Wallpapers: Place your media files in `~/Documents/win-wallpaper/wallpapers`.
+- Thumbnails: Automatically generated in `~/Documents/win-wallpaper/thumbnails`.
+- Settings: Last used settings are stored in `~/Documents/win-wallpaper/config.json`.
+
+## Usage
+
+1. Place your desired images or videos in the wallpapers directory.
+2. Launch the application.
+3. Use the selection bar at the bottom to switch wallpapers.
+4. Press Alt + W to hide or show the selection bar.

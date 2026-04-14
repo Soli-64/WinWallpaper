@@ -1,0 +1,16 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Capability for the main window",
+  "windows": ["wallpaper-*", "switch-bar"],
+  "permissions": [
+    "core:default",
+    "opener:default",
+    "core:event:default",
+    "wallpaper:default",
+    "allow-get-wallpapers",
+    "allow-set-wallpaper-config",
+    "allow-get-default-wallpaper",
+    "global-shortcut:default"
+  ]
+}
