@@ -1,3 +1,9 @@
+
+; PREINSTALL
+; - Verify ffmpeg availability (and install it if needed via winget) 
+;
+
+
 !macro NSIS_HOOK_PREINSTALL
 
     DetailPrint "Checking for FFmpeg..."
@@ -51,5 +57,25 @@
     ${EndIf}
 
 EndHook:
+
+!macroend
+
+
+
+; POSTINSTALL
+; - Add win-wallpaper in reg to open at startup
+;
+
+!macro NSIS_HOOK_POSTINSTALL
+
+    DetailPrint "Adding Wallpaper App to Windows startup..."
+
+    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "WinWallpaper" '"$INSTDIR\wallpaper-app.exe"'
+
+    ${If} ${Errors}
+        DetailPrint "Failed to add to startup."
+    ${Else}
+        DetailPrint "Successfully added to startup tasks."
+    ${EndIf}
 
 !macroend

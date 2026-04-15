@@ -1,8 +1,10 @@
 {
-  "name": "wallpaper-app",
-  "private": true,
+  "name": "win-wallpaper",
   "version": "0.1.0",
   "type": "module",
+  "repository": {
+    "url": "https://github.com/Soli-64/WindowsWallpaperManager"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

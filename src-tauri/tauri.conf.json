@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "wallpaper-app",
+  "productName": "WinWallpaper",
   "version": "0.1.0",
   "identifier": "com.lsoapps.winwallpaper",
   "build": {
@@ -17,6 +17,7 @@
         "url": "switch-bar.html",
         "width": 1200,
         "height": 200,
+        "skipTaskbar": true,
         "transparent": true,
         "decorations": false,
         "alwaysOnTop": true,
