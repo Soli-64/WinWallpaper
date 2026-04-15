@@ -4,3 +4,10 @@
 /node_modules
 /src-tauri/target
 /src-tauri/gen
+/dist
+
+*.env
+*.local
+*.msi
+*.exe
+*.dll
