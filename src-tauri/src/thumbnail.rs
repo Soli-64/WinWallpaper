@@ -20,7 +20,6 @@ impl ThumbnailManager {
 
     fn generate_thumbnail_filename(&self, original_path: &PathBuf) -> PathBuf {
         let filename = original_path.file_stem().unwrap_or_default().to_string_lossy();
-        // We always save as PNG for thumbnails to handle both videos and images consistently
         PathBuf::from(format!("thumb_{}.png", filename))
     }
 
