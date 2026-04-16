@@ -53,3 +53,15 @@ The application stores all data in your Documents folder under the `win-wallpape
 2. Launch the application.
 3. Use the selection bar at the bottom to switch wallpapers.
 4. Press Alt + W to hide or show the selection bar.
+
+## Contributing
+
+Contributions are welcome! If you'd like to improve WinWallpaper, please feel free to submit a Pull Request or open an issue.
+
+### Support the Project
+
+If you find this project useful and would like to support its development, donations are greatly appreciated.
+
+**BTC**: `19CdK5s3ALPcxjNxGiqM7pDZJ2AvY1SPcw` <br>
+**SOL**: `9q1pTozYZRHEuYn5eMBcNGj5BvHXCRPCyzhwVhNqazN1` <br>
+**ETH** (BASE): `0xDE23577a8f54E5e8EEF5eaf85438709a8178e897` <br>
