@@ -21,7 +21,10 @@
         "transparent": true,
         "decorations": false,
         "alwaysOnTop": true,
-        "center": true
+        "center": true,
+        "shadow": false,
+        "visible": false,
+        "resizable": false
       }
     ],
     "security": {

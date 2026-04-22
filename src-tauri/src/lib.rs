@@ -118,7 +118,11 @@ pub fn run() {
             }
 
             let monitors = app.available_monitors().unwrap();
+
             for (i, monitor) in monitors.iter().enumerate() {
+
+                println!("Monitor: {}", monitor.name().expect("Monitor name not found").as_str());
+
                 let label = format!("wallpaper-{}", i);
                 println!("Creating window {} for monitor: {}x{} @ ({},{})", 
                     label, monitor.size().width, monitor.size().height, monitor.position().x, monitor.position().y);
@@ -129,7 +133,7 @@ pub fn run() {
                     .transparent(true)
                     .resizable(false)
                     .visible(false)      
-                    .fullscreen(true)              
+                    .fullscreen(true)
                     .build()?;
 
                 let pos = monitor.position();

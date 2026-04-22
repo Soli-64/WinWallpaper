@@ -1,13 +1,6 @@
 use std::path::PathBuf;
 use std::fs;
-use image::{
-    DynamicImage, 
-    imageops::{
-        resize,
-        FilterType
-    }, 
-    GenericImageView
-};
+use image::DynamicImage;
 use std::process::Command;
 use crate::storage::{thumb_dir};
 
@@ -39,29 +32,18 @@ impl ThumbnailManager {
             return Ok(thumb_path);
         }
 
-        let img = if is_video {
-            self.extract_video_frame(original_path)?
-        } else {
-            image::open(original_path)?
-        };
-
-        let (original_width, original_height) = img.dimensions();
         let max_width = 320;
         let max_height = 180;
-        
-        let ratio = original_width as f32 / original_height as f32;
-        let (new_width, new_height) = if original_width > original_height {
-            let height = (max_width as f32 / ratio).min(max_height as f32) as u32;
-            (max_width.min(original_width), height)
-        } else {
-            let width = (max_height as f32 * ratio).min(max_width as f32) as u32;
-            (width, max_height.min(original_height))
-        };
 
-        let resized = resize(&img, new_width, new_height, FilterType::Nearest);
-        let resized_image = DynamicImage::ImageRgba8(resized);
-        
-        resized_image.save(&thumb_path)?;
+        if is_video {
+            let img = self.extract_video_frame(original_path, max_width, max_height)?;
+            img.save(&thumb_path)?;
+        } else {
+            // .thumbnail() is more memory-efficient than loading + resizing manually
+            let img = image::open(original_path)?;
+            let thumb = img.thumbnail(max_width, max_height);
+            thumb.save(&thumb_path)?;
+        }
         
         Ok(thumb_path)
     }
@@ -69,18 +51,23 @@ impl ThumbnailManager {
     fn extract_video_frame(
         &self,
         video_path: &PathBuf,
+        width: u32,
+        height: u32,
     ) -> Result<DynamicImage, Box<dyn std::error::Error>> {
         let temp_frame = std::env::temp_dir().join(format!(
             "frame_{}.png",
             video_path.file_stem().unwrap_or_default().to_string_lossy()
         ));
 
+        // ffmpeg scaling to save CPU/RAM
+        let scale_filter = format!("scale={}:{}:force_original_aspect_ratio=decrease", width, height);
+
         let output = Command::new("ffmpeg")
             .args(&[
                 "-i",
                 video_path.to_str().ok_or("Invalid path")?,
                 "-vf",
-                "select=eq(n\\,0)",
+                &format!("select=eq(n\\,0),{}", scale_filter),
                 "-q:v",
                 "2",
                 "-vframes", "1",

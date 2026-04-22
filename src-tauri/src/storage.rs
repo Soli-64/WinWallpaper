@@ -1,6 +1,7 @@
 use std::path::{PathBuf};
 use dirs;
 use walkdir::WalkDir;
+use serde_json::{Value, json};
 
 pub fn wallpapers_dir() -> PathBuf {
     dirs::document_dir()
@@ -35,27 +36,44 @@ pub fn config_file_path() -> PathBuf {
         .join("config.json")
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
-pub struct AppConfig {
-    pub last_wallpaper: Option<String>,
+fn load_full_config() -> Value {
+    let config_path = config_file_path();
+    if let Ok(content) = std::fs::read_to_string(config_path) {
+        if let Ok(val) = serde_json::from_str(&content) {
+            return val;
+        }
+    }
+    json!({})
 }
 
-pub fn save_config(path: String) {
-    let config = AppConfig { last_wallpaper: Some(path) };
+fn save_full_config(config: &Value) {
     let config_path = config_file_path();
-    if let Ok(json) = serde_json::to_string(&config) {
-        let _ = std::fs::write(config_path, json);
+    if let Ok(json_str) = serde_json::to_string_pretty(config) {
+        let _ = std::fs::write(config_path, json_str);
     }
+}
+
+pub fn set_config_value(key: &str, value: Value) {
+    let mut config = load_full_config();
+    if let Some(obj) = config.as_object_mut() {
+        obj.insert(key.to_string(), value);
+        save_full_config(&config);
+    }
+}
+
+pub fn get_config_value(key: &str) -> Option<Value> {
+    let config = load_full_config();
+    config.get(key).cloned()
+}
+
+
+// Backward compatibility with previous version
+pub fn save_config(path: String) {
+    set_config_value("last_wallpaper", json!(path));
 }
 
 pub fn load_config() -> Option<String> {
-    let config_path = config_file_path();
-    if let Ok(json) = std::fs::read_to_string(config_path) {
-        if let Ok(config) = serde_json::from_str::<AppConfig>(&json) {
-            return config.last_wallpaper;
-        }
-    }
-    None
+    get_config_value("last_wallpaper").and_then(|v| v.as_str().map(|s| s.to_string()))
 }
 
 pub fn list_files_recursive(dir: PathBuf, depth: usize, extensions: Option<&[&str]>) -> Vec<PathBuf> {

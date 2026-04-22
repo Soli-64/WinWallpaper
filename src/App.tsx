@@ -35,6 +35,7 @@ function App() {
       {wallpaperPath && (
         isVideo(wallpaperPath) ? (
           <video
+            key={wallpaperPath}
             src={convertFileSrc(wallpaperPath)}
             autoPlay
             loop
@@ -43,6 +44,7 @@ function App() {
           />
         ) : (
           <img
+            key={wallpaperPath}
             src={convertFileSrc(wallpaperPath)}
             alt="Wallpaper"
             className="wallpaper-media"
