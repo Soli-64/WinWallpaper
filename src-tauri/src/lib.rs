@@ -99,6 +99,7 @@ pub fn run() {
                                 window.show().unwrap();
                                 window.set_ignore_cursor_events(false).unwrap();
                                 window.set_focus().unwrap();
+                                let _ = window.eval("window.focus();");
                                 println!("Shown and accepting cursor events.");
                             }
                         } else {

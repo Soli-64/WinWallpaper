@@ -20,11 +20,29 @@ export default function SwitchBarApp() {
   const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
+    // Force focus on mount
+    window.focus();
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (scrollRef.current) {
+        if (e.key === 'ArrowRight') {
+          scrollRef.current.scrollBy({ left: 300, behavior: 'smooth' });
+        } else if (e.key === 'ArrowLeft') {
+          scrollRef.current.scrollBy({ left: -300, behavior: 'smooth' });
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
     invoke<CarouselItem[]>("get_wallpapers").then((data) => {
       setItems(data);
     }).catch((err) => {
       console.error("Failed to fetch wallpapers", err);
     });
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   const handleItemClick = async (item: CarouselItem) => {
