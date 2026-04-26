@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { invoke, convertFileSrc } from "@tauri-apps/api/core";
 import { emit } from "@tauri-apps/api/event";
 import "./SwitchBarApp.css";
@@ -12,6 +12,12 @@ interface CarouselItem {
 
 export default function SwitchBarApp() {
   const [items, setItems] = useState<CarouselItem[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const [isDown, setIsDown] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeftState, setScrollLeftState] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     invoke<CarouselItem[]>("get_wallpapers").then((data) => {
@@ -26,17 +32,74 @@ export default function SwitchBarApp() {
     await invoke("set_wallpaper_config", { path: item.path });
   };
 
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft += e.deltaY;
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    setIsDown(true);
+    setIsDragging(false);
+    if (scrollRef.current) {
+      setStartX(e.pageX - scrollRef.current.offsetLeft);
+      setScrollLeftState(scrollRef.current.scrollLeft);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsDown(false);
+  };
+
+  const handleMouseUp = () => {
+    setIsDown(false);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDown) return;
+    e.preventDefault();
+    if (scrollRef.current) {
+      const x = e.pageX - scrollRef.current.offsetLeft;
+      const walk = (x - startX) * 1.5; // Scroll speed multiplier
+      scrollRef.current.scrollLeft = scrollLeftState - walk;
+      
+      if (Math.abs(walk) > 5) {
+        setIsDragging(true);
+      }
+    }
+  };
+
   return (
     <div className="switch-bar-container">
-      <div className="scroll-area">
+      <div 
+        className="scroll-area" 
+        ref={scrollRef} 
+        onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
+        onMouseLeave={handleMouseLeave}
+        onMouseUp={handleMouseUp}
+        onMouseMove={handleMouseMove}
+      >
         <div className="carousel">
           {items.map((item, index) => (
             <div
               key={index}
               className="carousel-item"
-              onClick={() => handleItemClick(item)}
+              onClick={(e) => {
+                if (isDragging) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  return;
+                }
+                handleItemClick(item);
+              }}
             >
-              <img src={convertFileSrc(item.thumb_path)} alt={item.name} className="thumbnail-img" />
+              <img 
+                src={convertFileSrc(item.thumb_path)} 
+                alt={item.name} 
+                className="thumbnail-img"
+                draggable={false}
+              />
               {item.is_video && (
                 <div className="video-overlay">
                   {/* Simple Play Icon */}
