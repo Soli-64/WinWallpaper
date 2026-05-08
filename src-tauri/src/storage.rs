@@ -3,6 +3,10 @@ use serde_json::{json, Value};
 use std::path::PathBuf;
 use walkdir::WalkDir;
 
+//
+// Init different storage paths and dir.s
+//
+
 pub fn wallpapers_dir() -> PathBuf {
     dirs::document_dir()
         .unwrap_or_else(|| PathBuf::from("."))
@@ -24,6 +28,9 @@ pub fn widgets_dir() -> PathBuf {
         .join("widgets")
 }
 
+// 
+// Ensure required directories exist
+// 
 pub fn ensure_storage_initialized() {
     let w_dir = wallpapers_dir();
     let t_dir = thumb_dir();
@@ -84,7 +91,7 @@ pub fn get_config_value(key: &str) -> Option<Value> {
     config.get(key).cloned()
 }
 
-// Backward compatibility with previous version
+// Backward compatibility with previous version (alpha, might be removed in the future)
 pub fn save_config(path: String) {
     set_config_value("last_wallpaper", json!(path));
 }
@@ -99,6 +106,9 @@ pub fn get_shortcut() -> String {
         .unwrap_or_else(|| "alt+w".to_string())
 }
 
+// 
+// List files recursively with depth limit and file extension filter (optional)
+// 
 pub fn list_files_recursive(
     dir: PathBuf,
     depth: usize,

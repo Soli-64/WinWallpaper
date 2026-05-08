@@ -11,6 +11,7 @@ impl ThumbnailManager {
         Self {}
     }
 
+    // Generate thumbnail filename w/ prefix (e.g. "thumb_image.png")
     fn generate_thumbnail_filename(&self, original_path: &PathBuf) -> PathBuf {
         let filename = original_path
             .file_stem()
@@ -19,11 +20,15 @@ impl ThumbnailManager {
         PathBuf::from(format!("thumb_{}.png", filename))
     }
 
+    // Get full path of thumbnail from image path
     pub fn get_thumbnail_path(&self, original_path: &PathBuf) -> PathBuf {
         let filename = self.generate_thumbnail_filename(original_path);
         thumb_dir().join(filename)
     }
 
+    //
+    // Generate thumbnail from image path (with optional max width/height)
+    //
     pub fn create_thumbnail(
         &self,
         original_path: &PathBuf,
@@ -51,6 +56,10 @@ impl ThumbnailManager {
         Ok(thumb_path)
     }
 
+    // 
+    // Extract single frame from video using ffmpeg (scalable)
+    // Used for thumbnail generation
+    // 
     fn extract_video_frame(
         &self,
         video_path: &PathBuf,

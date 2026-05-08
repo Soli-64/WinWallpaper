@@ -15,6 +15,9 @@ fn set_wallpaper_config(path: String) {
     save_config(path);
 }
 
+// 
+// Get default wallpaper (from config or fallback)
+// 
 #[tauri::command]
 fn get_default_wallpaper() -> String {
     if let Some(path) = load_config() {
@@ -50,6 +53,9 @@ pub struct Widget {
     html_content: String,
 }
 
+// 
+// Get list of widgets (from widgets.json, loads and parse html files content)
+// 
 #[tauri::command]
 fn get_widgets() -> Result<Vec<Widget>, String> {
     let config_path = widgets_config_path();
@@ -71,6 +77,10 @@ fn get_widgets() -> Result<Vec<Widget>, String> {
     Ok(widgets)
 }
 
+// 
+// Get list of wallpapers (recursive w/ limited depth)
+// Checks media format, creates thumbnails if needed, and returns list of wallpapers
+//
 #[tauri::command]
 fn get_wallpapers() -> Vec<WallpaperItem> {
     ensure_storage_initialized();
@@ -120,6 +130,10 @@ use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent}
 use tauri::menu::{MenuBuilder, MenuItem, PredefinedMenuItem};
 use tauri::Emitter;
 
+// 
+// Cycle through wallpapers for next/previous wallpaper events 
+// (only in tray menu, upcoming global shortcut for full keyboard UX)
+//
 fn cycle_wallpaper(app: &tauri::AppHandle, forward: bool) {
     let wallpapers = get_wallpapers();
     if wallpapers.is_empty() { return; }
@@ -165,6 +179,9 @@ pub fn run() {
                                 "Shortcut {} detected! Toggling switch-bar...",
                                 active_shortcut
                             );
+
+
+                            // Toggle switch-bar visibility
                             if let Some(window) = app.get_webview_window("switch-bar") {
                                 let is_visible = window.is_visible().unwrap_or(false);
                                 println!("Current visibility: {}", is_visible);
@@ -192,6 +209,12 @@ pub fn run() {
             ensure_storage_initialized();
 
             let app_handle = app.handle().clone();
+
+            //
+            // Widgets Watcher
+            // Seems to be problems some with setIntervals, might need a  
+            // restart when modifying asynchonous widgets scripts
+            //
             let mut watcher = notify::recommended_watcher(move |res: notify::Result<notify::Event>| {
                 match res {
                     Ok(event) => {
@@ -208,6 +231,9 @@ pub fn run() {
 
             app.manage(std::sync::Mutex::new(watcher));
 
+            //
+            // Tray menu
+            //
             let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
             let show_i = MenuItem::with_id(app, "show", "Open Wallpaper Bar", true, None::<&str>)?;
             let next_i = MenuItem::with_id(app, "next", "Next Wallpaper", true, None::<&str>)?;
@@ -271,6 +297,7 @@ pub fn run() {
                     }
                 })
                 .build(app)?;
+
             // Register Shortcut from config
             let shortcut_to_reg = get_shortcut();
 
@@ -283,9 +310,14 @@ pub fn run() {
                 Err(e) => println!("Failed to register {} shortcut: {}", shortcut_to_reg, e),
             }
 
+            //
+            // Monitors handler
+            // Create multiple windows to match every screen
+            //
             let monitors = app.available_monitors().unwrap();
 
             for (i, monitor) in monitors.iter().enumerate() {
+                
                 println!(
                     "Monitor: {}",
                     monitor.name().expect("Monitor name not found").as_str()
