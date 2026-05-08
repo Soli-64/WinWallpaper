@@ -7,6 +7,7 @@ A native Windows wallpaper manager built with Tauri v2 and React. It provides a 
 - Multi-Monitor Support: Automatically detects all active monitors and creates dedicated background windows for each.
 - Media Support: Supports standard image formats and video files (MP4, WebM).
 - Automatic Thumbnails: Generates and caches thumbnails for all media types using FFmpeg.
+- Widgets Support: Overlay custom HTML/CSS/JS widgets onto your desktop wallpaper with live-reloading.
 - Global Shortcut: Toggle the selection interface at any time (Default: Alt + W, configurable in config.json).
 - Session Persistence: Remembers and reloads your last selected wallpaper on startup.
 - System Tray Integration: Right-click the tray icon for quick access to app controls, cycling wallpapers, or quitting the app.
@@ -46,7 +47,27 @@ The application stores all data in your Documents folder under the `win-wallpape
 
 - Wallpapers: Place your media files in `~/Documents/win-wallpaper/wallpapers`.
 - Thumbnails: Automatically generated in `~/Documents/win-wallpaper/thumbnails`.
+- Widgets: Place widget HTML files in `~/Documents/win-wallpaper/widgets`.
 - Settings: Last used settings and keyboard shortcut are stored in `~/Documents/win-wallpaper/config.json`.
+- Widgets Configuration: Configure active widgets in `~/Documents/win-wallpaper/widgets.json`.
+
+## Widgets
+
+WinWallpaper supports overlaying custom widgets on top of your wallpaper. Widgets are simple HTML files that can contain CSS and JavaScript.
+
+**How to use:**
+1. Create your widget HTML file in the `~/Documents/win-wallpaper/widgets` directory. (See our [Clock Widget Example](examples/widget/clock.html) to get started!)
+2. Define the widget in `~/Documents/win-wallpaper/widgets.json`:
+   ```json
+   [
+     {
+       "id": "my-clock-widget",
+       "name": "Desktop Clock",
+       "html_file": "clock.html"
+     }
+   ]
+   ```
+3. **Live Reloading**: WinWallpaper watches the `widgets` directory for changes. Any edits you save to your widget files will instantly reload on your desktop without needing to restart the app!
 
 ## Usage
 
