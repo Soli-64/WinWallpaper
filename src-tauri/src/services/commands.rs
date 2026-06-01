@@ -56,11 +56,13 @@ pub fn get_widgets() -> Result<Vec<Widget>, String> {
     let content = std::fs::read_to_string(&config_path).map_err(|e| e.to_string())?;
     let mut widgets: Vec<Widget> = serde_json::from_str(&content).map_err(|e| e.to_string())?;
 
-    let w_dir = widgets_dir();
+    let w_dir = widgets_dir().canonicalize().unwrap_or_else(|_| widgets_dir());
     for widget in &mut widgets {
         let html_path = w_dir.join(&widget.html_file);
-        if html_path.exists() {
-            widget.html_content = std::fs::read_to_string(html_path).unwrap_or_default();
+        if let Ok(canonical_path) = html_path.canonicalize() {
+            if canonical_path.starts_with(&w_dir) {
+                widget.html_content = std::fs::read_to_string(canonical_path).unwrap_or_default();
+            }
         }
     }
 

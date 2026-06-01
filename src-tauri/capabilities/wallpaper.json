@@ -1,0 +1,15 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "wallpaper",
+  "description": "Capability for the background wallpaper windows",
+  "windows": ["wallpaper-*"],
+  "permissions": [
+    "core:default",
+    "core:event:default",
+    "wallpaper:default",
+    "allow-get-default-wallpaper",
+    "allow-get-widgets",
+    "allow-get-monitor-wallpaper",
+    "allow-get-monitor-widgets"
+  ]
+}

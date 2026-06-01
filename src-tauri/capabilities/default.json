@@ -1,8 +1,8 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
-  "identifier": "default",
-  "description": "Capability for the main window",
-  "windows": ["wallpaper-*", "switch-bar"],
+  "identifier": "switch-bar",
+  "description": "Capability for the switch-bar controller window",
+  "windows": ["switch-bar"],
   "permissions": [
     "core:default",
     "opener:default",
