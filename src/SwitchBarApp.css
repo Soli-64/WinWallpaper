@@ -261,3 +261,103 @@
   font-size: 12px;
   text-align: center;
 }
+
+/* Sleek Control Card */
+.carousel-item.control-card {
+  background: linear-gradient(135deg, rgba(30, 30, 35, 0.95), rgba(15, 15, 20, 0.95));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px;
+  box-sizing: border-box;
+  cursor: default;
+}
+
+.carousel-item.control-card:hover {
+  transform: none;
+}
+
+.control-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.control-icon {
+  color: rgba(100, 100, 255, 0.8);
+}
+
+.control-title {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.shuffle-action-btn {
+  background: linear-gradient(135deg, rgba(88, 86, 214, 0.85), rgba(255, 45, 85, 0.85));
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: white;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(88, 86, 214, 0.2);
+}
+
+.shuffle-action-btn:hover {
+  background: linear-gradient(135deg, rgba(88, 86, 214, 1), rgba(255, 45, 85, 1));
+  box-shadow: 0 4px 16px rgba(88, 86, 214, 0.4);
+  transform: translateY(-1px);
+}
+
+.shuffle-action-btn:active {
+  transform: translateY(1px);
+}
+
+.filter-pill-container {
+  display: flex;
+  flex-direction: row;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 6px;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.filter-pill {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 6px 0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.filter-pill:hover {
+  color: white;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.filter-pill.active {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-weight: 600;
+}
