@@ -14,25 +14,15 @@ interface Widget {
 // Component to render widgets
 // 
 function WidgetComponent({ widget }: { widget: Widget }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (containerRef.current) {
-      containerRef.current.innerHTML = widget.html_content;
-
-      const scripts = containerRef.current.querySelectorAll("script");
-      scripts.forEach((oldScript) => {
-        const newScript = document.createElement("script");
-        Array.from(oldScript.attributes).forEach((attr) =>
-          newScript.setAttribute(attr.name, attr.value)
-        );
-        newScript.appendChild(document.createTextNode(oldScript.innerHTML));
-        oldScript.parentNode?.replaceChild(newScript, oldScript);
-      });
-    }
-  }, [widget]);
-
-  return <div ref={containerRef} className={`widget widget-${widget.id}`} />;
+  return (
+    <iframe
+      srcDoc={widget.html_content}
+      sandbox="allow-scripts"
+      className={`widget widget-${widget.id}`}
+      style={{ border: "none", width: "100%", height: "100%", background: "transparent" }}
+      title={widget.name}
+    />
+  );
 }
 
 // Only re-render when html_content changes to avoid unnecessary DOM operations
