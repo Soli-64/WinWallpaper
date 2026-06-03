@@ -98,6 +98,8 @@ export const WallpaperCarousel: React.FC<WallpaperCarouselProps> = ({ items, onW
               alt={item.name} 
               className="thumbnail-img"
               draggable={false}
+              // lazy load thumbnails
+              loading="lazy"
             />
             {item.is_video && (
               <div className="video-overlay">

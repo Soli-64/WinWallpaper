@@ -8,33 +8,57 @@ interface Widget {
   name: string;
   html_file: string;
   html_content: string;
+  html_path?: string; // Canonical absolute path for direct asset protocol loading
 }
 
 // 
 // Component to render widgets
 // 
-function WidgetComponent({ widget }: { widget: Widget }) {
+function WidgetComponent({ widget, isPlaying }: { widget: Widget; isPlaying: boolean }) {
+  // Use direct asset URL to enable webview file caching, or fallback to raw content via srcDoc.
+  // If not playing (wallpaper is covered/backgrounded), point to about:blank to immediately halt all JS execution inside.
+  const src = isPlaying && widget.html_path ? convertFileSrc(widget.html_path) : "about:blank";
+  const srcDoc = !widget.html_path && isPlaying ? widget.html_content : undefined;
+
   return (
     <iframe
-      srcDoc={widget.html_content}
+      src={src}
+      srcDoc={srcDoc}
       sandbox="allow-scripts"
       className={`widget widget-${widget.id}`}
-      style={{ border: "none", width: "100%", height: "100%", background: "transparent" }}
+      style={{
+        border: "none",
+        width: "100%",
+        height: "100%",
+        background: "transparent",
+        display: isPlaying ? "block" : "none" // Hide to avoid layout and repaint costs when covered
+      }}
       title={widget.name}
     />
   );
 }
 
-// Only re-render when html_content changes to avoid unnecessary DOM operations
+// Only re-render when html_content or play state changes to avoid unnecessary DOM operations
 const MemoizedWidgetComponent = React.memo(WidgetComponent, (prev, next) => {
-  return prev.widget.html_content === next.widget.html_content;
+  return prev.widget.html_content === next.widget.html_content && prev.isPlaying === next.isPlaying;
 });
 
 function App() {
   const [wallpaperPath, setWallpaperPath] = useState<string | null>(null);
   const [widgets, setWidgets] = useState<Widget[]>([]);
   const [activeWidgets, setActiveWidgets] = useState<string[]>([]);
+  const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.play().catch((err) => console.error("Failed to play video:", err));
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  }, [isPlaying, wallpaperPath]);
 
   const isVideo = (path: string) => {
     const ext = path.split('.').pop()?.toLowerCase();
@@ -62,6 +86,7 @@ function App() {
 
      let unlistenWallpaper: (() => void) | null = null;
      let unlistenWidgets: (() => void) | null = null;
+     let unlistenPlayState: (() => void) | null = null;
 
      const setupListener = async () => {
         unlistenWallpaper = await listen<string>(`update-monitor-${idx}`, (event) => {
@@ -84,6 +109,11 @@ function App() {
            setActiveWidgets(active || []);
          });
        });
+
+       unlistenPlayState = await listen<boolean>(`update-play-state-${idx}`, (event) => {
+         console.log("Play state update:", event.payload);
+         setIsPlaying(event.payload);
+       });
      };
 
      setupListener();
@@ -91,6 +121,7 @@ function App() {
      return () => {
        if (unlistenWallpaper) unlistenWallpaper();
        if (unlistenWidgets) unlistenWidgets();
+       if (unlistenPlayState) unlistenPlayState();
      };
    }, []);
 
@@ -120,11 +151,11 @@ function App() {
          )
        )}
 
-       <div className="widgets-layer">
-         {filteredWidgets.map((widget) => (
-           <MemoizedWidgetComponent key={widget.id} widget={widget} />
-         ))}
-       </div>
+        <div className="widgets-layer">
+          {filteredWidgets.map((widget) => (
+            <MemoizedWidgetComponent key={widget.id} widget={widget} isPlaying={isPlaying} />
+          ))}
+        </div>
     </main>
   );
 }

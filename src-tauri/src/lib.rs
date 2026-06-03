@@ -81,6 +81,15 @@ pub fn run() {
             // Setup monitors and windows
             window::setup_monitors(app)?;
 
+            // Background thread to monitor window visibility (maximize/fullscreen) and pause wallpapers
+            let app_handle_clone2 = app_handle.clone();
+            std::thread::spawn(move || {
+                loop {
+                    std::thread::sleep(std::time::Duration::from_millis(500));
+                    check_and_update_visibility(&app_handle_clone2);
+                }
+            });
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -102,3 +111,110 @@ pub fn run() {
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
+
+#[cfg(target_os = "windows")]
+fn check_and_update_visibility<R: tauri::Runtime>(app: &tauri::AppHandle<R>) {
+    use windows_sys::Win32::Foundation::{HWND, RECT, BOOL, LPARAM};
+    use windows_sys::Win32::UI::WindowsAndMessaging::{
+        GetForegroundWindow, GetWindowRect, IsZoomed, GetClassNameW,
+        EnumWindows, IsWindowVisible,
+    };
+    use windows_sys::Win32::Graphics::Gdi::{
+        MonitorFromWindow, GetMonitorInfoW, MONITORINFO, MONITOR_DEFAULTTONEAREST,
+        MonitorFromPoint
+    };
+    use windows_sys::Win32::Foundation::POINT;
+
+    let fg_hwnd = unsafe { GetForegroundWindow() };
+    if fg_hwnd == 0 {
+        return;
+    }
+
+    let mut class_name = [0u16; 256];
+    let len = unsafe { GetClassNameW(fg_hwnd, class_name.as_mut_ptr(), class_name.len() as i32) };
+    if len > 0 {
+        let name = String::from_utf16_lossy(&class_name[..len as usize]);
+        if name == "Progman" || name == "WorkerW" {
+            let monitors = app.available_monitors().unwrap_or_default();
+            for i in 0..monitors.len() {
+                let _ = app.emit(&format!("update-play-state-{}", i), true);
+            }
+            return;
+        }
+    }
+
+    let monitors = app.available_monitors().unwrap_or_default();
+    if monitors.is_empty() {
+        return;
+    }
+
+    let fg_hmonitor = unsafe { MonitorFromWindow(fg_hwnd, MONITOR_DEFAULTTONEAREST) };
+
+    let is_maximized = unsafe { IsZoomed(fg_hwnd) } != 0;
+    
+    let mut is_fullscreen = false;
+    let mut rect: RECT = unsafe { std::mem::zeroed() };
+    if unsafe { GetWindowRect(fg_hwnd, &mut rect) } != 0 {
+        let mut monitor_info: MONITORINFO = unsafe { std::mem::zeroed() };
+        monitor_info.cbSize = std::mem::size_of::<MONITORINFO>() as u32;
+        if unsafe { GetMonitorInfoW(fg_hmonitor, &mut monitor_info as *mut _ as *mut _) } != 0 {
+            let width = rect.right - rect.left;
+            let height = rect.bottom - rect.top;
+            let mon_width = monitor_info.rcMonitor.right - monitor_info.rcMonitor.left;
+            let mon_height = monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top;
+            
+            if width >= mon_width && height >= mon_height {
+                is_fullscreen = true;
+            }
+        }
+    }
+
+    let should_pause_fg_monitor = is_maximized || is_fullscreen;
+
+    struct EnumState {
+        maximized_monitors: Vec<isize>,
+    }
+    
+    let mut state = EnumState { maximized_monitors: Vec::new() };
+    
+    unsafe extern "system" fn enum_windows_callback(hwnd: HWND, lparam: LPARAM) -> BOOL {
+        let state = &mut *(lparam as *mut EnumState);
+        if IsWindowVisible(hwnd) != 0 && IsZoomed(hwnd) != 0 {
+            let hmonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+            if hmonitor != 0 {
+                state.maximized_monitors.push(hmonitor);
+            }
+        }
+        1
+    }
+
+    unsafe {
+        EnumWindows(Some(enum_windows_callback), &mut state as *mut _ as LPARAM);
+    }
+    
+    for (i, m) in monitors.iter().enumerate() {
+        let pos = m.position();
+        let size = m.size();
+        let center_x = pos.x + (size.width as i32) / 2;
+        let center_y = pos.y + (size.height as i32) / 2;
+        
+        let hmonitor = unsafe {
+            MonitorFromPoint(
+                POINT { x: center_x, y: center_y },
+                MONITOR_DEFAULTTONEAREST
+            )
+        };
+        
+        let is_fg_monitor = hmonitor == fg_hmonitor;
+        let has_maximized = state.maximized_monitors.contains(&hmonitor);
+        
+        let should_pause = (is_fg_monitor && should_pause_fg_monitor) || has_maximized;
+        
+        let _ = app.emit(&format!("update-play-state-{}", i), !should_pause);
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn check_and_update_visibility<R: tauri::Runtime>(_app: &tauri::AppHandle<R>) {
+}
+
