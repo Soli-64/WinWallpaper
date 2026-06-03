@@ -49,7 +49,8 @@ pub fn get_default_wallpaper() -> String {
 
 // Get list of widgets (from widgets.json, loads and parse html files content)
 #[tauri::command]
-pub fn get_widgets() -> Result<Vec<Widget>, String> {
+pub async fn get_widgets() -> Result<Vec<Widget>, String> {
+    // read config from disk
     let config_path = widgets_config_path();
     if !config_path.exists() {
         return Ok(vec![]);
@@ -63,7 +64,7 @@ pub fn get_widgets() -> Result<Vec<Widget>, String> {
         let html_path = w_dir.join(&widget.html_file);
         if let Ok(canonical_path) = html_path.canonicalize() {
             if canonical_path.starts_with(&w_dir) {
-                // Save the absolute file path for direct asset protocol resolution in the frontend
+                // save absolute path for direct loading
                 widget.html_path = Some(canonical_path.to_string_lossy().to_string());
                 widget.html_content = std::fs::read_to_string(canonical_path).unwrap_or_default();
             }
@@ -76,43 +77,54 @@ pub fn get_widgets() -> Result<Vec<Widget>, String> {
 // Get list of wallpapers (recursive w/ limited depth)
 // Checks media format, creates thumbnails if needed, and returns list of wallpapers
 #[tauri::command]
-pub fn get_wallpapers() -> Vec<WallpaperItem> {
+pub async fn get_wallpapers() -> Vec<WallpaperItem> {
+    // async execution on thread pool
     ensure_storage_initialized();
 
-    let mut items = Vec::new();
     let extensions = ["png", "jpg", "jpeg", "webp", "mp4", "webm", "mov"];
     let paths = list_files_recursive(wallpapers_dir(), 1, Some(&extensions));
 
-    let thumb_manager = ThumbnailManager::new();
+    let mut tasks = Vec::new();
 
     for path in paths {
-        let is_video = match path.extension() {
-            Some(ext) => {
-                ["mp4", "webm", "mov"].contains(&ext.to_string_lossy().to_lowercase().as_str())
-            }
-            None => false,
-        };
+        // spawn blocking task for parallel thumbnail generation
+        tasks.push(tauri::async_runtime::spawn_blocking(move || {
+            let is_video = match path.extension() {
+                Some(ext) => {
+                    ["mp4", "webm", "mov"].contains(&ext.to_string_lossy().to_lowercase().as_str())
+                }
+                None => false,
+            };
 
-        let name = path
-            .file_name()
-            .unwrap_or_default()
-            .to_string_lossy()
-            .into_owned();
-        let thumb_path = match thumb_manager.create_thumbnail(&path, is_video) {
-            Ok(p) => p.to_string_lossy().into_owned(),
-            Err(e) => {
-                eprintln!("Failed to create thumbnail for {:?}: {}", path, e);
-                // Fallback to original path if thumbnail fails (might not display well but won't crash)
-                path.to_string_lossy().into_owned()
-            }
-        };
+            let name = path
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .into_owned();
 
-        items.push(WallpaperItem {
-            name,
-            path: path.to_string_lossy().into_owned(),
-            thumb_path,
-            is_video,
-        });
+            let thumb_manager = ThumbnailManager::new();
+            let thumb_path = match thumb_manager.create_thumbnail(&path, is_video) {
+                Ok(p) => p.to_string_lossy().into_owned(),
+                Err(e) => {
+                    eprintln!("Failed to create thumbnail for {:?}: {}", path, e);
+                    path.to_string_lossy().into_owned()
+                }
+            };
+
+            WallpaperItem {
+                name,
+                path: path.to_string_lossy().into_owned(),
+                thumb_path,
+                is_video,
+            }
+        }));
+    }
+
+    let mut items = Vec::new();
+    for task in tasks {
+        if let Ok(item) = task.await {
+            items.push(item);
+        }
     }
 
     items

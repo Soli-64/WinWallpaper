@@ -14,7 +14,8 @@ fn cycle_wallpaper_for_monitor<R: tauri::Runtime>(
     monitor_index: u32,
     forward: bool,
 ) {
-    let wallpapers = get_wallpapers();
+    // block on async wallpapers fetch
+    let wallpapers = tauri::async_runtime::block_on(get_wallpapers());
     if wallpapers.is_empty() {
         return;
     }

@@ -181,7 +181,20 @@ fn get_legacy_shortcut() -> String {
 // - Save [ app_config, full_config ]
 //
 
-pub fn load_app_config() -> AppConfig {
+use std::sync::{OnceLock, RwLock};
+
+// config memory cache
+static APP_CONFIG: OnceLock<RwLock<AppConfig>> = OnceLock::new();
+
+// get config cache reference
+fn get_config_cache() -> &'static RwLock<AppConfig> {
+    APP_CONFIG.get_or_init(|| {
+        RwLock::new(load_app_config_from_disk())
+    })
+}
+
+// load config from disk
+fn load_app_config_from_disk() -> AppConfig {
     let config_path = config_file_path();
     if let Ok(content) = std::fs::read_to_string(&config_path) {
         if let Ok(config) = serde_json::from_str::<AppConfig>(&content) {
@@ -191,11 +204,28 @@ pub fn load_app_config() -> AppConfig {
     AppConfig::default()
 }
 
-pub fn save_app_config(config: AppConfig) {
+// save config to disk
+fn save_app_config_to_disk(config: &AppConfig) {
     let config_path = config_file_path();
-    if let Ok(json_str) = serde_json::to_string_pretty(&config) {
+    if let Ok(json_str) = serde_json::to_string_pretty(config) {
         let _ = std::fs::write(config_path, json_str);
     }
+}
+
+pub fn load_app_config() -> AppConfig {
+    // read from cache
+    let cache = get_config_cache().read().unwrap();
+    cache.clone()
+}
+
+pub fn save_app_config(config: AppConfig) {
+    // write to cache
+    {
+        let mut cache = get_config_cache().write().unwrap();
+        *cache = config.clone();
+    }
+    // write to disk
+    save_app_config_to_disk(&config);
 }
 
 fn load_full_config() -> Value {
