@@ -8,26 +8,39 @@ interface Widget {
   name: string;
   html_file: string;
   html_content: string;
+  html_path?: string; // Canonical absolute path for direct asset protocol loading
 }
 
 // 
 // Component to render widgets
 // 
-function WidgetComponent({ widget }: { widget: Widget }) {
+function WidgetComponent({ widget, isPlaying }: { widget: Widget; isPlaying: boolean }) {
+  // Use direct asset URL to enable webview file caching, or fallback to raw content via srcDoc.
+  // If not playing (wallpaper is covered/backgrounded), point to about:blank to immediately halt all JS execution inside.
+  const src = isPlaying && widget.html_path ? convertFileSrc(widget.html_path) : "about:blank";
+  const srcDoc = !widget.html_path && isPlaying ? widget.html_content : undefined;
+
   return (
     <iframe
-      srcDoc={widget.html_content}
+      src={src}
+      srcDoc={srcDoc}
       sandbox="allow-scripts"
       className={`widget widget-${widget.id}`}
-      style={{ border: "none", width: "100%", height: "100%", background: "transparent" }}
+      style={{
+        border: "none",
+        width: "100%",
+        height: "100%",
+        background: "transparent",
+        display: isPlaying ? "block" : "none" // Hide to avoid layout and repaint costs when covered
+      }}
       title={widget.name}
     />
   );
 }
 
-// Only re-render when html_content changes to avoid unnecessary DOM operations
+// Only re-render when html_content or play state changes to avoid unnecessary DOM operations
 const MemoizedWidgetComponent = React.memo(WidgetComponent, (prev, next) => {
-  return prev.widget.html_content === next.widget.html_content;
+  return prev.widget.html_content === next.widget.html_content && prev.isPlaying === next.isPlaying;
 });
 
 function App() {
@@ -138,11 +151,11 @@ function App() {
          )
        )}
 
-       <div className="widgets-layer">
-         {filteredWidgets.map((widget) => (
-           <MemoizedWidgetComponent key={widget.id} widget={widget} />
-         ))}
-       </div>
+        <div className="widgets-layer">
+          {filteredWidgets.map((widget) => (
+            <MemoizedWidgetComponent key={widget.id} widget={widget} isPlaying={isPlaying} />
+          ))}
+        </div>
     </main>
   );
 }

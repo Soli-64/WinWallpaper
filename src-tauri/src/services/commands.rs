@@ -27,6 +27,8 @@ pub struct Widget {
     pub html_file: String,
     #[serde(default)]
     pub html_content: String,
+    #[serde(default)]
+    pub html_path: Option<String>,
 }
 
 //
@@ -61,6 +63,8 @@ pub fn get_widgets() -> Result<Vec<Widget>, String> {
         let html_path = w_dir.join(&widget.html_file);
         if let Ok(canonical_path) = html_path.canonicalize() {
             if canonical_path.starts_with(&w_dir) {
+                // Save the absolute file path for direct asset protocol resolution in the frontend
+                widget.html_path = Some(canonical_path.to_string_lossy().to_string());
                 widget.html_content = std::fs::read_to_string(canonical_path).unwrap_or_default();
             }
         }
