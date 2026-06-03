@@ -34,7 +34,18 @@ function App() {
   const [wallpaperPath, setWallpaperPath] = useState<string | null>(null);
   const [widgets, setWidgets] = useState<Widget[]>([]);
   const [activeWidgets, setActiveWidgets] = useState<string[]>([]);
+  const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.play().catch((err) => console.error("Failed to play video:", err));
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  }, [isPlaying, wallpaperPath]);
 
   const isVideo = (path: string) => {
     const ext = path.split('.').pop()?.toLowerCase();
@@ -62,6 +73,7 @@ function App() {
 
      let unlistenWallpaper: (() => void) | null = null;
      let unlistenWidgets: (() => void) | null = null;
+     let unlistenPlayState: (() => void) | null = null;
 
      const setupListener = async () => {
         unlistenWallpaper = await listen<string>(`update-monitor-${idx}`, (event) => {
@@ -84,6 +96,11 @@ function App() {
            setActiveWidgets(active || []);
          });
        });
+
+       unlistenPlayState = await listen<boolean>(`update-play-state-${idx}`, (event) => {
+         console.log("Play state update:", event.payload);
+         setIsPlaying(event.payload);
+       });
      };
 
      setupListener();
@@ -91,6 +108,7 @@ function App() {
      return () => {
        if (unlistenWallpaper) unlistenWallpaper();
        if (unlistenWidgets) unlistenWidgets();
+       if (unlistenPlayState) unlistenPlayState();
      };
    }, []);
 
